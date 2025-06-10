@@ -331,9 +331,19 @@ train_predictor(uint32_t pc, uint8_t outcome)
 
 void clean_predictor(){
   // Free all the data structures you created 
-  if (bht) free(bht);
-  if (global) free(global);
-  if (choices) free(choices);
-  if (lhistories) free(lhistories);
-  if (lpredict) free(lpredict);
+  if (bht){
+    free(bht);
+  }
+  if (global){
+    free(global);
+  }
+  if (choices){
+    free(choices);
+  }
+  if (lhistories){
+    free(lhistories);
+  }
+  if (lpredict){
+    free(lpredict);
+  }
 }
