@@ -33,10 +33,10 @@ extern const char *email;
 extern const char *bpName[];
 
 // Definitions for 2-bit counters
-#define SN  0			// predict NT, strong not taken
-#define WN  1			// predict NT, weak not taken
-#define WT  2			// predict T, weak taken
-#define ST  3			// predict T, strong taken
+#define SN  0			// predict NT, strong not taken, 00
+#define WN  1			// predict NT, weak not taken, 01
+#define WT  2			// predict T, weak taken, 10
+#define ST  3			// predict T, strong taken, 11
 
 //------------------------------------//
 //      Predictor Configuration       //
@@ -66,5 +66,8 @@ uint8_t make_prediction(uint32_t pc);
 // indicates that the branch was not taken)
 //
 void train_predictor(uint32_t pc, uint8_t outcome);
+
+// Clean up the data structures for the predictor
+void clean_predictor();
 
 #endif

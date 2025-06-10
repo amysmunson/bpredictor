@@ -80,6 +80,10 @@ read_branch(uint32_t *pc, uint8_t *outcome)
 int
 main(int argc, char *argv[])
 {
+  studentName = "Amy Munson";
+  studentID = "A16755353";
+  email = "ammunson@ucsd.edu";
+  
   // Set defaults
   stream = stdin;
   bpType = STATIC;
@@ -134,6 +138,7 @@ main(int argc, char *argv[])
   printf("Misprediction Rate: %7.3f\n", mispredict_rate);
 
   // Cleanup
+  clean_predictor();
   fclose(stream);
   free(buf);
 

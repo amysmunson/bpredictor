@@ -6,6 +6,7 @@
 //  described in the README                               //
 //========================================================//
 #include <stdio.h>
+#include <math.h>  
 #include "predictor.h"
 
 //
@@ -37,6 +38,10 @@ int verbose;
 //TODO: Add your own Branch Predictor data structures here
 //
 
+unsigned ghistory;
+unsigned mask;
+int bhtBits;
+int* bht;
 
 //------------------------------------//
 //        Predictor Functions         //
@@ -47,9 +52,29 @@ int verbose;
 void
 init_predictor()
 {
-  //
-  //TODO: Initialize Branch Predictor Data Structures
-  //
+  switch (bpType) {
+    case GSHARE: {
+      ghistory = 0;
+
+      // If ghistory bits is 2, you start with 001 for 1
+      // Shift left by 2 bits  to get 100
+      // Subtract 1 from this value to get 011, will only ever use as many bits as are 1s in the mask/allocated by ghistoryBits
+      mask = (1 << ghistoryBits) - 1;
+
+      bhtBits = 1 << ghistoryBits;
+
+      bht = calloc(bhtBits, sizeof(int));
+      for (int i = 0; i < bhtBits; i++) {
+        bht[i] = WN;
+      }
+
+      return;
+    }
+    case TOURNAMENT: {return;}
+    case CUSTOM: {return;}
+    default:
+      return;
+  }
 }
 
 // Make a prediction for conditional branch instruction at PC 'pc'
@@ -59,15 +84,24 @@ init_predictor()
 uint8_t
 make_prediction(uint32_t pc)
 {
-  //
-  //TODO: Implement prediction scheme
-  //
-
   // Make a prediction based on the bpType
   switch (bpType) {
     case STATIC:
       return TAKEN;
-    case GSHARE:
+    case GSHARE: {
+      // XOR for the bht index
+      int xorval = pc ^ ghistory;
+      // Don't grab an index that's out of bounds and then segfault
+      int predindex = xorval & mask;
+      // Get the prediction, return the corresponding value
+      int prediction = bht[predindex];
+      if (prediction == WN || prediction == SN){
+        return NOTTAKEN;
+      }
+      else{
+        return TAKEN;
+      }
+    }
     case TOURNAMENT:
     case CUSTOM:
     default:
@@ -85,7 +119,45 @@ make_prediction(uint32_t pc)
 void
 train_predictor(uint32_t pc, uint8_t outcome)
 {
-  //
-  //TODO: Implement Predictor training
-  //
+  switch (bpType) {
+    case GSHARE: {
+      // Same as before, grab the xor value and make sure it fits inside the mask/bht table
+      int xorval = pc ^ ghistory;
+      int predindex = xorval & mask;
+      // Grab the original prediction
+      int prediction = bht[predindex];
+      
+      // Update the prediction for this value of the table, making sure not to go out of bounds as to accepted values
+      if (outcome == TAKEN){
+        if (prediction != ST){
+          prediction++;
+        }
+      }
+      else{
+        if (prediction != SN){
+          prediction--;
+        }
+      }
+
+      // Store the new prediction for this index
+      bht[predindex] = prediction;
+
+      // Update the global history
+      // Shift it left 1 (opening up a new 0 on the right), fill that spot with the actual outcome
+      unsigned newGhistory = ((ghistory << 1) | outcome);
+      // Cut it down to the mask size (chopping off the leftmost bit)
+      ghistory = newGhistory & mask;
+
+      return;
+    }
+    case TOURNAMENT:
+    case CUSTOM:
+    default:
+      return;
+  }
+}
+
+void clean_predictor(){
+  // Free all the data structures you created 
+  free(bht);
 }
